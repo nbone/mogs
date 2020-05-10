@@ -1,0 +1,26 @@
+.serverInfo i.iconServer {
+  display: block;
+  width: 40px;
+  height: 40px;
+  background-image: url('../../../static/img/icon_server_info.svg');
+  background-repeat: no-repeat;
+  background-size: 32px;
+  background-position: center;
+}
+
+.serverInfo .panel {
+  display: none;
+  background-color: white;
+}
+
+.serverInfo:hover .panel {
+  display: block;
+}
+
+.error {
+  color: red;
+}
+
+.serverInfo > div {
+  padding: 10px;
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "tslint-config-standard",
+  "rules": {
+    "prefer-const": true
+  },
+  "linterOptions": {
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
+  }
+}
