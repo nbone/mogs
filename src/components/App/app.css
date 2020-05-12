@@ -1,22 +1,33 @@
 .appContainer {
-  background-image: url('../../../static/img/table-bg.png');
+  /* background-image: url('../../../static/img/table-bg.png'); */
 }
 
 .header {
   display: flex;
   width: 100vw;
-  height: 100px;
+  height: 44px;
+  padding: 4px;
+  background: linear-gradient(0deg, #101214, transparent);
+}
+
+.title {
+  flex-basis: 100%;
+  padding: 0 4px;
+  font-family: 'Audiowide';
+  font-size: 30px;
+  line-height: 36px;
 }
 
 .main {
   width: 100vw;
   height: calc(100vh - 100px);
+  padding: 10px;
 }
 
 .profile i.iconUser {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background-image: url('../../../static/img/icon_user_circle.svg');
   background-repeat: no-repeat;
   background-size: 32px;
@@ -29,4 +40,29 @@
 
 .profile:hover .panel {
   display: block;
+  position: absolute;
+  top: 44px;
+  right: 8px;
+  width: 240px;
+  background-color: rgba(0, 0, 24, 0.75);
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 18px;
 }
+
+.profile input[type=text] {
+  background-color: transparent;
+  width: 100%;
+  height: 30px;
+  border: none;
+  margin: 4px 0 0 0;
+  padding: 8px;
+  color: #d2dfe2;
+}
+
+.profile input[type=text]:hover {
+  background-color: rgba(224, 224, 224, 0.05);
+  box-shadow: inset 0 0 2px rgba(210, 222, 226, 0.5);
+  border-radius: 4px;
+}
+

@@ -10,11 +10,17 @@
 
 .serverInfo .panel {
   display: none;
-  background-color: white;
 }
 
 .serverInfo:hover .panel {
   display: block;
+  position: absolute;
+  top: 44px;
+  right: 8px;
+  background-color: rgba(0, 0, 24, 0.75);
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 18px;
 }
 
 .error {

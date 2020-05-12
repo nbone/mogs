@@ -14,6 +14,7 @@ export const ChatPanel: React.FunctionComponent = (props) => {
     });
   }, []);
 
+  // TODO: toggle panel visibility on click (here), not hover (css)
   return (
     <div className={style.chatPanel}>
       <i className={style.iconChat}></i>
@@ -40,10 +41,11 @@ const MessagePost: React.FunctionComponent = (props) => {
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <input type="text" value={msgTxt} onChange={(event) => setMsgTxt(event.target.value)} />
-      <button type="submit">Send</button>
-    </form>
+    <div className={style.messagePost}>
+      <form onSubmit={onSubmit}>
+        <input type="text" value={msgTxt} onChange={(event) => setMsgTxt(event.target.value)} />
+      </form>
+    </div>
   )
 }
 

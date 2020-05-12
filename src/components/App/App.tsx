@@ -19,6 +19,7 @@ export const Profile: React.FunctionComponent = () => {
     <div className={style.profile}>
       <i className={style.iconUser}></i>
       <div className={style.panel}>
+        You are signed in as<br />
         <input type="text" name="name" value={name} onChange={handleChange} />
       </div>
     </div>
@@ -44,6 +45,10 @@ export const Lobby: React.FunctionComponent = () => {
   return (
     <div>
       Lobby todo...
+      ONLY display this if not currently JOINED in a game.
+      List the current games.
+      Option to start a new game (and choose type/options).
+      Option to join an existing game that is WAITING for players.
     </div>
   )
 }
@@ -63,7 +68,7 @@ export const App: React.FunctionComponent = () => {
     <div className={style.appContainer}>
       <div className={style.header}>
         <div className={style.title}>
-          This is the title of my app...
+          M.O.G.S.
         </div>
         <ChatPanel />
         <ServerInfo />
