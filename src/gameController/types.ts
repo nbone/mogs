@@ -29,3 +29,42 @@ export class GameInfo {
         // public gameState: object,
     ){}
 }
+
+export enum GameEventType {
+    Create,
+    Join,
+    Start,
+    Finish,
+    Abort,
+    Message,
+}
+
+export class GameEvent {
+    constructor(
+        public id: string,
+        public type: GameEventType,
+        public timestamp: number,
+        public gameInfo: GameInfo,
+        public details: object | undefined,
+    ){}
+}
+
+export class GameRecord {
+    constructor (
+        public id: string,
+        public settings: GameSettings,
+        public status: GameStatus,
+        public players: GamePlayer[],
+        public events: object[],
+        public gameState: object,
+    ){}
+}
+
+export function toGameInfo(gameRecord: GameRecord): GameInfo {
+    return new GameInfo(
+        gameRecord.id,
+        gameRecord.settings,
+        gameRecord.status,
+        gameRecord.players,
+    )
+}

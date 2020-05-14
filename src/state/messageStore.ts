@@ -43,11 +43,17 @@ export class RichMessage {
 // TODO: send game event
 
 type MessageCallback = (message: RichMessage) => any
-let messageSubscribers: MessageCallback[] = [];
-export function subscribeMessageCallback(callback: MessageCallback) {
+let messageSubscriberMap: Map<string, MessageCallback> = new Map();
+export function subscribeMessageCallback(callback: MessageCallback): string {
   // TODO: filter?
   // TODO: return handle for unsubscribe?
-  messageSubscribers.push(callback);
+  const id = uuid.v4()
+  messageSubscriberMap.set(id, callback)
+  return id
+}
+
+export function unsubscribeMessageCallback(id: string) {
+  messageSubscriberMap.delete(id)
 }
 
 async function getRichMessagesFromServer(): Promise<RichMessage[]> {
@@ -100,7 +106,7 @@ function toLocalMessageFromServer(message: Message): MessageFromServer {
   };
 }
 
-async function doSendChatMessage(message: Message): Promise<RichMessage> {
+async function doSendMessage(message: Message): Promise<RichMessage> {
   if (USE_LOCAL_STORE){
     const serverMessage = toRichMessage(toLocalMessageFromServer(message));
     localMessages.unshift(serverMessage);
@@ -125,7 +131,12 @@ export async function sendChatMessage(text: string): Promise<RichMessage> {
     message: text,
   }
 
-  const response = await doSendChatMessage(message);
-  messageSubscribers.forEach((callback) => callback(response));
+  const response = await doSendMessage(message);
+  messageSubscriberMap.forEach((callback) => callback(response));
   return response;
+}
+
+export async function sendGameMessage(data: GameMessageBody): Promise<RichMessage> {
+  let encodedMessage = RICH_MESSAGE_MARKER + JSON.stringify(data)
+  return sendChatMessage(encodedMessage)
 }

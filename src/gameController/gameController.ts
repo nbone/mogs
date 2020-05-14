@@ -1,41 +1,13 @@
 // Abstracts all interactions with the game server and individual games.
 
-import { GameSettings, GameInfo, GameStatus, GamePlayer } from "./types";
 import { Key } from "react";
+import { GameSettings, GameInfo, GameRecord, GameEvent, toGameInfo } from "./types";
+import { createHostedGame, startHostedGame } from "../gameServer/gameServer"
+import { settings } from "../state/settings";
 
 type ObjectGroup<T> = {
     key: Key
     items: T[]
-}
-
-export enum GameEventType {
-    Create,
-    Join,
-    Start,
-    Finish,
-    Abort,
-    Message,
-}
-
-export class GameEvent {
-    constructor(
-        public id: string,
-        public type: GameEventType,
-        public timestamp: number,
-        public gameInfo: GameInfo,
-        public details: object | undefined,
-    ){}
-}
-
-class GameRecord {
-    constructor (
-        public id: string,
-        public settings: GameSettings,
-        public status: GameStatus,
-        public players: GamePlayer[],
-        public events: object[],
-        public gameState: object,
-    ){}
 }
 
 let gameDatabase = new Map<string, GameRecord>();
@@ -75,15 +47,6 @@ function collateGameInfo(gameEventGroup: ObjectGroup<GameEvent>): GameInfo {
     return orderBy(gameEventGroup.items, e => e.timestamp, reverse)[0].gameInfo;
 }
 
-function toGameInfo(gameRecord: GameRecord): GameInfo {
-    return new GameInfo(
-        gameRecord.id,
-        gameRecord.settings,
-        gameRecord.status,
-        gameRecord.players,
-    )
-}
-
 export function listGames(): GameInfo[] {
     // const gameMessages = await getGameMessages();
     // const gameEvents = []; // TODO
@@ -93,10 +56,20 @@ export function listGames(): GameInfo[] {
 }
 
 export function createGame(gameSettings: GameSettings) {
-    // maybe move "server" logic to other module, but...
-    // 1. create new game entity
-    // 2. insert into game data store
-    // 3. publish create event
+    // TODO: get ALL player info from settings, and handle error if missing
+    const playerName = settings.getUserName() || ''
+    const publicKey = new Uint8Array()
+    const host = {
+        id: 'TODO',
+        name: playerName,
+        isHost: true,
+        publicKey: publicKey
+    }
+
+    // HACK: for now, get the created game and add it to the list we return from listGames()
+    // TODO: fix separation of responsibilities
+    const createdGameHack = createHostedGame(gameSettings, host)
+    gameDatabase.set(createdGameHack.id, createdGameHack)
 }
 
 export function joinGame(gameId: string) {
@@ -104,4 +77,25 @@ export function joinGame(gameId: string) {
     // 2. validate that join is OK
     // 3. update game entity
     // 4. publish join event
+}
+
+export function startGame(gameId: string) {
+    // ONLY for self-hosted games (verify that current player is the host)
+    startHostedGame(gameId)
+}
+
+// TODO:
+// 1. function so app knows whether we're currently in a game
+// 2. function to render the game view
+
+export function getCurrentGameInfo(): GameInfo | undefined {
+    // HACK: for now using local game database instead of from server
+    // TODO: use player ID instead of name
+    // ASSUME: can only be in one game at a time, so return first match
+    const playerName = settings.getUserName() || '';
+    return listGames().find(g => g.players.find(p => p.name == playerName));
+}
+
+export function renderGameView(gameId: string) {
+    
 }

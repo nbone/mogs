@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import TimeAgo from 'timeago-react'
 
-import { getChatMessages, sendChatMessage, subscribeMessageCallback, RichMessage } from '../../state/messageStore'
+import { getChatMessages, sendChatMessage, subscribeMessageCallback, RichMessage, unsubscribeMessageCallback } from '../../state/messageStore'
 
 const style = require('./chat-panel.css')
 
@@ -9,9 +9,13 @@ export const ChatPanel: React.FunctionComponent = (props) => {
   const [refresh, setRefresh] = useState<number>(0)
 
   useEffect(() => {
-    subscribeMessageCallback(message => {
+    const subId = subscribeMessageCallback(message => {
       setRefresh(r => r + 1);
     });
+
+    return function cleanup() {
+      unsubscribeMessageCallback(subId);
+    }
   }, []);
 
   // TODO: toggle panel visibility on click (here), not hover (css)
