@@ -17,7 +17,7 @@
   position: absolute;
   top: 44px;
   right: 8px;
-  background-color: rgba(0, 0, 24, 0.75);
+  background-color: hsla(240, 40%, 10%, 0.75);
   border-radius: 4px;
   padding: 12px;
   font-size: 18px;

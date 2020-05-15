@@ -17,7 +17,7 @@
   position: absolute;
   top: 44px;
   right: 8px;
-  background-color: rgba(0, 0, 24, 0.75);
+  background-color: hsla(240, 40%, 10%, 0.75);
   border-radius: 4px;
 }
 
@@ -31,6 +31,8 @@
   width: 300px;
   height: calc(100vh - 100px);
   overflow-y: auto;
+  overflow-wrap: break-word;
+  hyphens: auto;
   /* scrollbar-color for Mozilla */
   scrollbar-color: rgba(210, 222, 226, 0.2) transparent;
 }

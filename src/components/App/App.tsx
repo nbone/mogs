@@ -36,6 +36,7 @@ export const Main: React.FunctionComponent = () => {
 
   useEffect(() => {
     const subId = subscribeMessageCallback(message => {
+      console.log(message);
       setGameList(listGames());
     });
 
@@ -46,7 +47,9 @@ export const Main: React.FunctionComponent = () => {
 
   return (
     <div className={style.main}>
-      { !myGame ? <Lobby games={gameList} /> : <GameWindow game={myGame} /> }
+      {/* { !myGame ? <Lobby games={gameList} /> : <GameWindow game={myGame} /> } */}
+      <Lobby games={gameList} />
+      <GameWindow game={myGame} />
     </div>
   )
 }
@@ -81,7 +84,7 @@ export const Lobby: React.FunctionComponent = (props) => {
   }
 
   return (
-    <div>
+    <div className={style.lobby}>
       <p>
         Lobby todo...
         ONLY display this if not currently JOINED in a game.

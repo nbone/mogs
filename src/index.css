@@ -5,10 +5,61 @@
   box-sizing: border-box;
 }
 
+/* This reset block adapted from https://meyerweb.com/eric/tools/css/reset/reset.css */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video,
+button, input, textarea, select, option {
+	margin: 0;
+	padding: 0;
+  border: 0;
+  background: transparent;
+  color: unset;
+  font: unset;
+  text-align: unset;
+	vertical-align: baseline;
+}
+
+ol, ul {
+	list-style: none;
+}
+
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+td, th {
+  padding: 4px 8px;
+}
+
+/* TODO: use CSS variables to define colors and such */
+
+button {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  box-shadow: 0 0px 2px rgba(0, 0, 24, 0.5);
+  background: linear-gradient(0deg, hsl(240, 60%, 33%), hsl(240, 60%, 57%));
+  font-weight: bold;
+}
+
+a {
+  text-decoration: none;
+}
+
 body {
-  margin: 0;
-  padding: 0;
-  background: radial-gradient(#141440, #101214);
+  min-height: 100vh;
+  background: radial-gradient(hsl(240, 60%, 18%), hsl(240, 40%, 6%));
   color: #d2dce2;
   font-family: 'Gruppo';
   font-size: 16px;

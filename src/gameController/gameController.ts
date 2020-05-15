@@ -1,16 +1,36 @@
 // Abstracts all interactions with the game server and individual games.
 
 import { Key } from "react";
-import { GameSettings, GameInfo, GameRecord, GameEvent, toGameInfo } from "./types";
+import { GameSettings, GameInfo } from "./types";
 import { createHostedGame, startHostedGame } from "../gameServer/gameServer"
 import { settings } from "../state/settings";
+import { getGameMessages, MessageType, RichMessage, subscribeMessageCallback } from "../state/messageStore";
 
 type ObjectGroup<T> = {
     key: Key
     items: T[]
 }
 
-let gameDatabase = new Map<string, GameRecord>();
+// Maintain local in-memory database of all the games, from the published message history
+let gameDatabase = new Map<string, GameInfo>();
+getGameMessages().then(
+    gameMessages => {
+        const gameInfoMessages = gameMessages.filter(m => m.type == MessageType.GameInfo);
+        const reverse = true;
+        orderBy(gameInfoMessages, m => m.when, reverse).forEach(processMessage);
+    }
+).then(
+    () => {
+        subscribeMessageCallback(processMessage);
+    }
+)
+
+function processMessage(message: RichMessage) {
+    if (message.type == MessageType.GameInfo) {
+        const gameInfo: GameInfo = message.body;
+        gameDatabase.set(gameInfo.id, gameInfo);
+    }
+}
 
 function groupBy<T>(sequence: T[], propertySelector: (obj: T) => Key): ObjectGroup<T>[] {
     let groups = new Map<Key, object[]>();
@@ -42,17 +62,14 @@ function orderBy<T>(sequence: T[], propertySelector: (obj: T) => Key, reverse: b
     });
 }
 
-function collateGameInfo(gameEventGroup: ObjectGroup<GameEvent>): GameInfo {
+function collateGameInfo(gameEventGroup: ObjectGroup<RichMessage>): GameInfo {
     const reverse = true;
-    return orderBy(gameEventGroup.items, e => e.timestamp, reverse)[0].gameInfo;
+    return orderBy(gameEventGroup.items, e => e.when, reverse)[0].body;
 }
 
 export function listGames(): GameInfo[] {
-    // const gameMessages = await getGameMessages();
-    // const gameEvents = []; // TODO
-    // return groupBy(gameEvents, e => e.gameInfo.id)
-    //     .map(gp => collateGameInfo(gp));
-    return Array.from(gameDatabase.values(), toGameInfo);
+    console.log(Array.from(gameDatabase.values()))
+    return Array.from(gameDatabase.values())
 }
 
 export function createGame(gameSettings: GameSettings) {
@@ -66,10 +83,7 @@ export function createGame(gameSettings: GameSettings) {
         publicKey: publicKey
     }
 
-    // HACK: for now, get the created game and add it to the list we return from listGames()
-    // TODO: fix separation of responsibilities
-    const createdGameHack = createHostedGame(gameSettings, host)
-    gameDatabase.set(createdGameHack.id, createdGameHack)
+    createHostedGame(gameSettings, host)
 }
 
 export function joinGame(gameId: string) {

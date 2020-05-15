@@ -36,8 +36,8 @@ Player actions:
 */
 
 import uuid from 'uuid'
-import { GameSettings, GameRecord, GamePlayer, GameStatus, GameEvent, GameEventType, toGameInfo } from "../gameController/types";
-import { sendGameMessage, GameMessageBody } from '../state/messageStore';
+import { GameSettings, GameRecord, GamePlayer, GameStatus, toGameInfo } from "../gameController/types";
+import { sendGameInfoMessage, sendGameViewStateMessage } from '../state/messageStore';
 import { TicTacToeGame } from '../games/TicTacToe/TicTacToe';
 
 let hostedGames = new Map<string, GameRecord>();
@@ -59,22 +59,7 @@ export function createHostedGame(gameSettings: GameSettings, host: GamePlayer) {
     hostedGames[game.id] = game
 
     // 3. publish create event
-    let event = new GameEvent(
-        uuid.v4(),
-        GameEventType.Create,
-        Date.now(),
-        toGameInfo(game),
-        {}
-    )
-    sendGameMessage(new GameMessageBody(
-        game.id,
-        undefined,
-        false,
-        JSON.stringify(event)
-    ))
-
-    // temporary HACK:
-    return game
+    sendGameInfoMessage(toGameInfo(game))
 }
 
 // TODO: invert dependency
@@ -108,11 +93,7 @@ export function processPlayerAction(gameId: string, playerName: string, action: 
 function publishGameState(gameId: string, playerName: string) {
     // TODO: use player ID instead of name
     const game = hostedGames.get(gameId)
+    // TODO: encrypt viewState with player's public key
     const viewState = game.gameState.getGameViewStateForPlayer(playerName)
-    sendGameMessage(new GameMessageBody(
-        gameId,
-        [playerName],
-        false /* TODO: use encryption */,
-        JSON.stringify(viewState)
-    ))
+    sendGameViewStateMessage(gameId, playerName, viewState)
 }
