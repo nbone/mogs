@@ -20,23 +20,23 @@ figure, figcaption, footer, header, hgroup,
 menu, nav, output, ruby, section, summary,
 time, mark, audio, video,
 button, input, textarea, select, option {
-	margin: 0;
-	padding: 0;
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: unset;
   font: unset;
   text-align: unset;
-	vertical-align: baseline;
+  vertical-align: baseline;
 }
 
 ol, ul {
-	list-style: none;
+  list-style: none;
 }
 
 table {
-	border-collapse: collapse;
-	border-spacing: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 td, th {
   padding: 4px 8px;

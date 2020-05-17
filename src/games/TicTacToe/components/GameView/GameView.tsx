@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { GameViewState } from '../../TicTacToe'
 
-// const style = require('./game-view.css')
+const style = require('./game-view.css')
 
 export const GameView: React.FunctionComponent = (props: { state: GameViewState }) => {
-    const { state } = props
+    const { viewState } = props
 
+    console.log(props)
     return (
         <div>
-            <Header state={state} />
-            <Board state={state} />
+            <Header state={viewState} />
+            <Board state={viewState} />
         </div>
     )
 }
@@ -34,14 +35,14 @@ const Board: React.FunctionComponent = (props) => {
     // TODO: let player take action (if it's their turn)
 
     return (
-        <table>
-            {state.board.map(row => {
+        <table className={style.board}>
+            {state.board.map((row, i) =>
                 <tr>
-                    {row.map(cell => {
-                        <td>{cell}</td>
-                    })}
+                    {row.map((col, j) =>
+                        <td >{col}</td>
+                    )}
                 </tr>
-            })}
+            )}
         </table>
     )
 }

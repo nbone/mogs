@@ -3,9 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { settings } from '../../state/settings'
 import { ServerInfo } from '../ServerInfo'
 import { ChatPanel } from '../ChatPanel'
-import { listGames, createGame, getCurrentGameInfo } from '../../gameController/gameController'
+import { listGames, createGame, getCurrentGameInfo, joinGame, startGame, renderGameView, subscribeGameUpdatedCallback, unsubscribeGameUpdatedCallback } from '../../gameController/gameController'
 import { GameStatus, GameInfo } from '../../gameController/types'
-import { subscribeMessageCallback, unsubscribeMessageCallback } from '../../state/messageStore'
 
 const style = require('./app.css')
 
@@ -31,25 +30,23 @@ export const Profile: React.FunctionComponent = () => {
 
 export const Main: React.FunctionComponent = () => {
   const [gameList, setGameList] = useState<GameInfo[]>(listGames())
-
-  const myGame = getCurrentGameInfo();
+  const [myGame, setMyGame] = useState<GameInfo>()
 
   useEffect(() => {
-    const subId = subscribeMessageCallback(message => {
-      console.log(message);
-      setGameList(listGames());
-    });
+    const subId = subscribeGameUpdatedCallback(gameId => {
+    console.log('Game has been updated: ' + gameId);
+    setGameList(listGames());
+    setMyGame(getCurrentGameInfo());
+  });
 
     return function cleanup() {
-      unsubscribeMessageCallback(subId);
+      unsubscribeGameUpdatedCallback(subId);
     }
   }, []);
 
   return (
     <div className={style.main}>
-      {/* { !myGame ? <Lobby games={gameList} /> : <GameWindow game={myGame} /> } */}
-      <Lobby games={gameList} />
-      <GameWindow game={myGame} />
+      { !myGame ? <Lobby games={gameList} /> : <GameWindow game={myGame} /> }
     </div>
   )
 }
@@ -65,9 +62,9 @@ export const Lobby: React.FunctionComponent = (props) => {
   function doCreateGame(event) {
     setRenderCreateDialog(false)
     const gameSettings = {
-      gameTitleId: 'Test Game Title Id',
-      minPlayers: 1,
-      maxPlayers: 3,
+      gameTitleId: 'TicTacToe',
+      minPlayers: 2,
+      maxPlayers: 2,
       options: {},
     }
     createGame(gameSettings)
@@ -120,6 +117,7 @@ const GamesList: React.FunctionComponent = (props) => {
         <th>Game</th>
         <th>Status</th>
         <th>Host</th>
+        <th></th>
       </thead>
       <tbody>
         {games?.map(g => <GameDisplay game={g} />)}
@@ -145,11 +143,16 @@ function gameStatusToDisplayString(gameStatus: GameStatus) {
 const GameDisplay: React.FunctionComponent = (props) => {
   const { game } = props
 
+  function handleJoinClick(event) {
+    joinGame(game.id)
+  }
+
   return (
     <tr key={game.id}>
       <td>{game.settings.gameTitleId}</td>
       <td>{gameStatusToDisplayString(game.status)}</td>
-      <td>{game.players.filter(p => p.isHost)[0].name}</td>
+      <td>{game.players.find(p => p.isHost).name}</td>
+      <td><button onClick={handleJoinClick}>Join</button></td>
     </tr>
   )
 }
@@ -157,11 +160,29 @@ const GameDisplay: React.FunctionComponent = (props) => {
 export const GameWindow: React.FunctionComponent = (props) => {
   const { game } = props;
 
+  const isPlaying = game.status == GameStatus.Playing;
+  const canStart = game.players.length >= game.settings.minPlayers;
+  const isHost = game.players.find(p => p.isHost).id == settings.getUserId();
+
+  function handleStartClick(event) {
+    startGame(game.id)
+  }
+
+  if (isPlaying) {
+    return renderGameView(game.id)
+  }
+
   return (
-    <div>
-      GameWindow todo...
+    <div className={style.gameWindow}>
+      <div>
+      {
+        canStart ?
+          isHost ? <div>Ready to start! <button onClick={handleStartClick}>start</button></div>
+            : 'Waiting for host to start...'
+          : 'Waiting for players...'
+      }
+      </div>
       <pre>{JSON.stringify(game, null, 2)}</pre>
-      If can start (i.e. enough players) then enable START button.
     </div>
   )
 }

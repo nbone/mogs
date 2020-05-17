@@ -1,18 +1,44 @@
 // Abstracts all interactions with the game server and individual games.
 
+import uuid from 'uuid'
 import { Key } from "react";
-import { GameSettings, GameInfo } from "./types";
-import { createHostedGame, startHostedGame } from "../gameServer/gameServer"
+import { GameSettings, GameInfo, GamePlayer } from "./types";
+import { createHostedGame, startHostedGame, processJoinRequest } from "../gameServer/gameServer"
 import { settings } from "../state/settings";
-import { getGameMessages, MessageType, RichMessage, subscribeMessageCallback } from "../state/messageStore";
+import { getGameMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody } from "../state/messageStore";
+import { GameView } from "../games/TicTacToe/components/GameView";
 
 type ObjectGroup<T> = {
     key: Key
     items: T[]
 }
 
+type GameUpdatedCallback = (gameId: string) => any
+let gameUpdatedSubscriberMap: Map<string, GameUpdatedCallback> = new Map();
+export function subscribeGameUpdatedCallback(callback: GameUpdatedCallback): string {
+  // TODO: allow subscribing to only some game ids?
+  const id = uuid.v4()
+  gameUpdatedSubscriberMap.set(id, callback)
+  return id
+}
+
+export function unsubscribeGameUpdatedCallback(id: string) {
+  gameUpdatedSubscriberMap.delete(id)
+}
+
+// TODO: invert dependency
+let gameViewRegistry = new Map<string, React.FunctionComponent>([
+  ['TicTacToe', GameView]
+]);
+
+// Keep track of the games hosted by the local game server
+let locallyHostedGameIds: Set<string> = new Set();
+
+// Track current view state for active games this player is involved in
+let gameViewStateDatabase = new Map<string, object>();
+
 // Maintain local in-memory database of all the games, from the published message history
-let gameDatabase = new Map<string, GameInfo>();
+let gameInfoDatabase = new Map<string, GameInfo>();
 getGameMessages().then(
     gameMessages => {
         const gameInfoMessages = gameMessages.filter(m => m.type == MessageType.GameInfo);
@@ -26,10 +52,25 @@ getGameMessages().then(
 )
 
 function processMessage(message: RichMessage) {
-    if (message.type == MessageType.GameInfo) {
-        const gameInfo: GameInfo = message.body;
-        gameDatabase.set(gameInfo.id, gameInfo);
+  console.log(message);
+  if (message.type == MessageType.GameInfo) {
+    const gameInfo: GameInfo = message.body;
+    gameInfoDatabase.set(gameInfo.id, gameInfo);
+    gameUpdatedSubscriberMap.forEach((callback) => callback(gameInfo.id));
+  }
+  else if (message.type == MessageType.JoinRequest) {
+    const joinRequest: GameJoinRequestBody = message.body;
+    if (locallyHostedGameIds.has(joinRequest.gameId))
+      processJoinRequest(joinRequest.gameId, joinRequest.player)
+  }
+  else if (message.type == MessageType.GameViewState) {
+    const viewState: GameViewStateBody = message.body;
+    if (viewState.to == settings.getUserId()) {
+      // TODO: decrypt message (once we have encryption)
+      gameViewStateDatabase.set(viewState.gameId, viewState.viewState)
+      gameUpdatedSubscriberMap.forEach((callback) => callback(viewState.gameId));
     }
+  }
 }
 
 function groupBy<T>(sequence: T[], propertySelector: (obj: T) => Key): ObjectGroup<T>[] {
@@ -68,8 +109,8 @@ function collateGameInfo(gameEventGroup: ObjectGroup<RichMessage>): GameInfo {
 }
 
 export function listGames(): GameInfo[] {
-    console.log(Array.from(gameDatabase.values()))
-    return Array.from(gameDatabase.values())
+  console.log(Array.from(gameInfoDatabase.values()))
+  return Array.from(gameInfoDatabase.values())
 }
 
 export function createGame(gameSettings: GameSettings) {
@@ -77,20 +118,25 @@ export function createGame(gameSettings: GameSettings) {
     const playerName = settings.getUserName() || ''
     const publicKey = new Uint8Array()
     const host = {
-        id: 'TODO',
+        id: settings.getUserId(),
         name: playerName,
         isHost: true,
         publicKey: publicKey
     }
 
-    createHostedGame(gameSettings, host)
+    const gameId = createHostedGame(gameSettings, host)
+    locallyHostedGameIds.add(gameId)
 }
 
 export function joinGame(gameId: string) {
-    // 1. fetch game data from store
-    // 2. validate that join is OK
-    // 3. update game entity
-    // 4. publish join event
+    // TODO: single way to get player info, correctly
+    const player: GamePlayer = {
+        id: settings.getUserId(),
+        name: settings.getUserName() || '',
+        isHost: false,
+        publicKey: new Uint8Array(),
+    }
+    sendGameJoinRequestMessage(gameId, player)
 }
 
 export function startGame(gameId: string) {
@@ -98,18 +144,18 @@ export function startGame(gameId: string) {
     startHostedGame(gameId)
 }
 
-// TODO:
-// 1. function so app knows whether we're currently in a game
-// 2. function to render the game view
-
 export function getCurrentGameInfo(): GameInfo | undefined {
     // HACK: for now using local game database instead of from server
-    // TODO: use player ID instead of name
     // ASSUME: can only be in one game at a time, so return first match
-    const playerName = settings.getUserName() || '';
-    return listGames().find(g => g.players.find(p => p.name == playerName));
+    const playerId = settings.getUserId() || '';
+    return listGames().find(g => g.players.find(p => p.id == playerId));
 }
 
 export function renderGameView(gameId: string) {
-    
+    const game = gameInfoDatabase.get(gameId)
+    const gameTitleId = game.settings.gameTitleId
+    const view = gameViewRegistry.get(gameTitleId)
+    const viewState = gameViewStateDatabase.get(gameId)
+    const props = { viewState }
+    return view(props)
 }

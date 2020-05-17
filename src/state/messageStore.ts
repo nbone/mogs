@@ -7,14 +7,34 @@ import uuid from 'uuid'
 import { Message, MessageFromServer } from '../types'
 import { getMessages, postMessage } from '../api'
 import { settings } from './settings';
-import { GameInfo } from '../gameController/types';
+import { GameInfo, GamePlayer } from '../gameController/types';
 
 const RICH_MESSAGE_MARKER = '\x01';
 const USE_LOCAL_STORE = true;
-const LOCAL_STORAGE_MESSAGES_KEY = 'messageStore.localMessages';
 
 // TODO: maybe better to use IndexedDB than local storage (but also this local store is a hack)?
-let localMessages: RichMessage[] = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY) || '[]');
+class LocalMessages {
+    private STORAGE_KEY = 'messageStore.localMessages';
+
+    constructor() {
+    }
+
+    public get(): RichMessage[] {
+        return JSON.parse(localStorage.getItem(this.STORAGE_KEY) || '[]');
+    }
+
+    public add(message: RichMessage) {
+        let messages = this.get();
+        messages.unshift(message);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(messages));
+    }
+
+    public clear() {
+        localStorage.removeItem(this.STORAGE_KEY);
+    }
+}
+const localMessages = new LocalMessages();
+let seenMessageIds = new Set<string>(localMessages.get().map(m => m.id));
 
 export enum MessageType {
   Plain,            // plain text message, for chat
@@ -37,6 +57,11 @@ export type GameViewStateBody = {
   gameId: string,
   to: string,
   viewState: object,
+}
+
+export type GameJoinRequestBody = {
+    gameId: string,
+    player: GamePlayer,
 }
 
 type TypedMessage = {
@@ -70,12 +95,16 @@ export function unsubscribeMessageCallback(id: string) {
 
 // POLL for new messages (currently LOCAL ONLY, because that's what we're using for development)
 let messagePollInterval = setInterval(() => {
-  let messages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY) || '[]');
-  if (messages.length > localMessages.length) {
-    console.log('Got more messages! Had ' + localMessages.length + '; now have ' + messages.length);
-    localMessages = messages;
-    // HACK: only fire callback for MOST RECENT message (currently no subscriber uses the message itself, only the fact that there's something new)
-    messageSubscriberMap.forEach((callback) => callback(messages[0]));
+  let messages: RichMessage[] = localMessages.get();
+  if (messages.length > seenMessageIds.size) {
+    // Newest messages are first, so process in reverse order
+    for (let i = seenMessageIds.size; i >= 0; i--) {
+      let message = messages[i];
+      if (!seenMessageIds.has(message.id)) {
+        seenMessageIds.add(message.id);
+        messageSubscriberMap.forEach((callback) => callback(message));
+      }
+    }
   }
 }, 1000);
 
@@ -88,13 +117,7 @@ async function getRichMessagesFromServer(): Promise<RichMessage[]> {
 
 export async function getAllMessages(): Promise<RichMessage[]> {
   if (USE_LOCAL_STORE) {
-    if (!localMessages.length) {
-      const messages = await getRichMessagesFromServer();
-      localMessages = messages;
-      localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(localMessages));
-      return localMessages;
-    }
-    return localMessages;
+    return localMessages.get();
   } else {
     return getRichMessagesFromServer();
   }
@@ -132,11 +155,13 @@ function toLocalMessageFromServer(message: Message): MessageFromServer {
 }
 
 async function doSendMessage(message: Message): Promise<RichMessage> {
-  if (USE_LOCAL_STORE){
+  if (USE_LOCAL_STORE) {
+    if (message.message == '!cls') {
+      localMessages.clear();
+    }
+
     const serverMessage = toRichMessage(toLocalMessageFromServer(message));
-    localMessages.unshift(serverMessage);
-    localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(localMessages));
-    console.log('Sending message #' + localMessages.length);
+    localMessages.add(serverMessage);
     return serverMessage;
   } else {
     const serverUrl = settings.getServerUrl();
@@ -164,32 +189,34 @@ export async function sendChatMessage(text: string): Promise<RichMessage> {
 }
 
 export async function sendGameInfoMessage(data: GameInfo): Promise<RichMessage> {
-  const typedMessage: TypedMessage = {
-    type: MessageType.GameInfo,
-    body: data,
+  return sendTypedMessage(MessageType.GameInfo, data)
+}
+
+export async function sendGameJoinRequestMessage(gameId: string, player: GamePlayer) {
+  const body: GameJoinRequestBody = {
+    gameId: gameId,
+    player: player,
   }
-  const encodedMessage = RICH_MESSAGE_MARKER + JSON.stringify(typedMessage)
-  return sendChatMessage(encodedMessage)
+  return sendTypedMessage(MessageType.JoinRequest, body)
 }
 
-export async function sendGameJoinRequestMessage() {
-}
-
-export async function sendGameViewStateMessage(gameId: string, playerName: string, data: object) {
-  // TODO: Use player ID instead of name
+export async function sendGameViewStateMessage(gameId: string, playerId: string, data: object) {
   const body: GameViewStateBody = {
     gameId: gameId,
-    to: playerName,
+    to: playerId,
     viewState: data,
   }
+  return sendTypedMessage(MessageType.GameViewState, body)
+}
+
+export async function sendGamePlayerActionMessage() {
+}
+
+async function sendTypedMessage(type: MessageType, body: object) {
   const typedMessage: TypedMessage = {
-    type: MessageType.GameViewState,
+    type: type,
     body: body,
   }
   const encodedMessage = RICH_MESSAGE_MARKER + JSON.stringify(typedMessage)
   return sendChatMessage(encodedMessage)
-
-}
-
-export async function sendGamePlayerActionMessage() {
 }

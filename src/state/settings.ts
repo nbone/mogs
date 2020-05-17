@@ -1,13 +1,9 @@
 
-// TEST: recurring background event? (It works!)
-// let counter = 10;
-// let interval = setInterval(() => {
-//     console.log(counter);
-//     counter--;
-//     if (counter <= 0) {
-//         clearInterval(interval);
-//     }
-// }, 1000);
+import uuid from 'uuid'
+
+// TODO: Eventually we'll autogenerate the User ID when the user name is set and put it in localStorage.
+// BUT for now we're keeping it in memory to facilitate multi-user testing in the same browser.
+const userId: string = uuid.v4();
 
 export const settings = {
     getServerUrl: () => {
@@ -22,5 +18,9 @@ export const settings = {
     },
     setUserName: (userName: string) => {
         localStorage.setItem('userName', userName);
+    },
+
+    getUserId: () => {
+        return userId;
     },
 };
