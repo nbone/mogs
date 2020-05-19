@@ -110,7 +110,7 @@ async function getRichMessagesFromServer (): Promise<RichMessage[]> {
   return messages.map(m => toRichMessage(m))
 }
 
-export async function getAllMessages (): Promise<RichMessage[]> {
+async function getAllMessages (): Promise<RichMessage[]> {
   if (USE_LOCAL_STORE) {
     return localMessages.get()
   } else {
@@ -123,9 +123,9 @@ export async function getChatMessages (): Promise<RichMessage[]> {
   return messages.filter(m => m.type === MessageType.Plain)
 }
 
-export async function getGameMessages (): Promise<RichMessage[]> {
+export async function getGameInfoMessages (): Promise<RichMessage[]> {
   const messages = await getAllMessages()
-  return messages.filter(m => m.type !== MessageType.Plain)
+  return messages.filter(m => m.type === MessageType.GameInfo)
 }
 
 function toRichMessage (message: MessageFromServer): RichMessage {

@@ -5,7 +5,7 @@ import { Key } from 'react'
 import { GameSettings, GameInfo, GamePlayer } from './types'
 import { createHostedGame, startHostedGame, processJoinRequest } from '../gameServer/gameServer'
 import { settings } from '../state/settings'
-import { getGameMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody } from '../state/messageStore'
+import { getGameInfoMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody } from '../state/messageStore'
 import { GameView } from '../games/TicTacToe/components/GameView'
 
 type ObjectGroup<T> = {
@@ -39,9 +39,8 @@ const gameViewStateDatabase = new Map<string, object>()
 
 // Maintain local in-memory database of all the games, from the published message history
 const gameInfoDatabase = new Map<string, GameInfo>()
-getGameMessages().then(
-  gameMessages => {
-    const gameInfoMessages = gameMessages.filter(m => m.type === MessageType.GameInfo)
+getGameInfoMessages().then(
+    gameInfoMessages => {
     const reverse = true
     orderBy(gameInfoMessages, m => m.when, reverse).forEach(processMessage)
   }

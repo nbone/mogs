@@ -29,15 +29,19 @@ export const Profile: React.FunctionComponent = () => {
 }
 
 export const Main: React.FunctionComponent = () => {
-  const [gameList, setGameList] = useState<GameInfo[]>(listGames())
+  const [gameList, setGameList] = useState<GameInfo[]>()
   const [myGame, setMyGame] = useState<GameInfo>()
 
+  function onGameUpdated (gameId: string) {
+    console.log('Game has been updated: ' + gameId)
+    setGameList(listGames())
+    setMyGame(getCurrentGameInfo())
+  }
+
   useEffect(() => {
-    const subId = subscribeGameUpdatedCallback(gameId => {
-      console.log('Game has been updated: ' + gameId)
-      setGameList(listGames())
-      setMyGame(getCurrentGameInfo())
-    })
+    const subId = subscribeGameUpdatedCallback(onGameUpdated)
+
+    onGameUpdated('(initial render)')
 
     return function cleanup () {
       unsubscribeGameUpdatedCallback(subId)
