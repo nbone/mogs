@@ -10,7 +10,7 @@ export const ServerInfo: React.FunctionComponent = () => {
   const [meta, setMeta] = useState<Metadata | undefined>()
   const [error, setError] = useState<string | undefined>()
 
-  const serverUrl = settings.getServerUrl();
+  const serverUrl = settings.getServerUrl()
   // TODO: set server URL if unset (or allow editing it anyway)
 
   useEffect(() => {

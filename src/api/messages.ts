@@ -18,6 +18,6 @@ export function postMessage (baseUrl, message: Message): Promise<MessageFromServ
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(message),
+    body: JSON.stringify(message)
   }).then(response => response.json())
 }

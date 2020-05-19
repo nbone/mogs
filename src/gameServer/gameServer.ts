@@ -36,77 +36,75 @@ Player actions:
 */
 
 import uuid from 'uuid'
-import { GameSettings, GameRecord, GamePlayer, GameStatus, toGameInfo } from "../gameController/types";
-import { sendGameInfoMessage, sendGameViewStateMessage } from '../state/messageStore';
-import { TicTacToeGame } from '../games/TicTacToe/TicTacToe';
+import { GameSettings, GameRecord, GamePlayer, GameStatus, toGameInfo } from '../gameController/types'
+import { sendGameInfoMessage, sendGameViewStateMessage } from '../state/messageStore'
+import { TicTacToeGame } from '../games/TicTacToe/TicTacToe'
 
-let hostedGames = new Map<string, GameRecord>();
+const hostedGames = new Map<string, GameRecord>()
 
-export function createHostedGame(gameSettings: GameSettings, host: GamePlayer): string {
-    // TODO: validate gameSettings
+export function createHostedGame (gameSettings: GameSettings, host: GamePlayer): string {
+  // TODO: validate gameSettings
 
-    // 1. create new game entity
-    let game = new GameRecord(
-        uuid.v4(),
-        gameSettings,
-        GameStatus.Preparing,
-        [host],
-        [],
-        {}
-    )
+  // 1. create new game entity
+  const game = new GameRecord(
+    uuid.v4(),
+    gameSettings,
+    GameStatus.Preparing,
+    [host],
+    [],
+    {}
+  )
 
-    // 2. insert into game data store
-    hostedGames.set(game.id, game)
+  // 2. insert into game data store
+  hostedGames.set(game.id, game)
 
-    // 3. publish create event
-    sendGameInfoMessage(toGameInfo(game))
+  // 3. publish create event
+  sendGameInfoMessage(toGameInfo(game))
 
-    return game.id
+  return game.id
 }
 
 // TODO: invert dependency
-let gameRegistry = new Map<string, object>([
-    ['TicTacToe', {
-        engine: TicTacToeGame,
-    }]
-]);
+const gameRegistry = new Map<string, object>([
+  ['TicTacToe', {
+    engine: TicTacToeGame
+  }]
+])
 
-export function startHostedGame(gameId: string) {
-    // TODO: validate gameId
-    const game = hostedGames.get(gameId)
-    const gameEngine = gameRegistry.get(game.settings.gameTitleId).engine
-    const instance = new gameEngine(game.players.map(p => p.id)) // TODO: consistent engine interface
-    game.gameState = instance
-    game.status = GameStatus.Playing
-    game.players.forEach(p => {
-        publishGameState(gameId, p)
-    })
+export function startHostedGame (gameId: string) {
+  // TODO: validate gameId
+  const game = hostedGames.get(gameId)
+  const gameEngine = gameRegistry.get(game.settings.gameTitleId).engine
+  const instance = new gameEngine(game.players.map(p => p.id)) // TODO: consistent engine interface
+  game.gameState = instance
+  game.status = GameStatus.Playing
+  game.players.forEach(p => {
+    publishGameState(gameId, p)
+  })
+  hostedGames.set(gameId, game)
+  sendGameInfoMessage(toGameInfo(game))
+}
+
+export function processPlayerAction (gameId: string, playerId: string, action: object) {
+  const game = hostedGames.get(gameId)
+  game.gameState.act(playerId, action)
+  game.players.forEach(p => {
+    publishGameState(gameId, p)
+  })
+}
+
+export function processJoinRequest (gameId: string, player: GamePlayer) {
+  const game = hostedGames.get(gameId)
+  if (game?.status === GameStatus.Preparing && game?.players.length < game?.settings.maxPlayers) {
+    game.players.push(player)
     hostedGames.set(gameId, game)
     sendGameInfoMessage(toGameInfo(game))
+  }
 }
 
-export function processPlayerAction(gameId: string, playerId: string, action: object) {
-    const game = hostedGames.get(gameId)
-    game.gameState.act(playerId, action)
-    game.players.forEach(p => {
-        publishGameState(gameId, p)
-    })
-}
-
-
-export function processJoinRequest(gameId: string, player: GamePlayer) {
-    let game = hostedGames.get(gameId)
-    if (game?.status == GameStatus.Preparing && game?.players.length < game?.settings.maxPlayers) {
-        game.players.push(player)
-        hostedGames.set(gameId, game)
-        sendGameInfoMessage(toGameInfo(game))
-    }
-}
-
-
-function publishGameState(gameId: string, player: GamePlayer) {
-    const game = hostedGames.get(gameId)
-    // TODO: encrypt viewState with player's public key
-    const viewState = game.gameState.getGameViewStateForPlayer(player.id)
-    sendGameViewStateMessage(gameId, player.id, viewState)
+function publishGameState (gameId: string, player: GamePlayer) {
+  const game = hostedGames.get(gameId)
+  // TODO: encrypt viewState with player's public key
+  const viewState = game.gameState.getGameViewStateForPlayer(player.id)
+  sendGameViewStateMessage(gameId, player.id, viewState)
 }
