@@ -3,9 +3,9 @@
 import uuid from 'uuid'
 import { Key } from 'react'
 import { GameSettings, GameInfo, GamePlayer } from './types'
-import { createHostedGame, startHostedGame, processJoinRequest } from '../gameServer/gameServer'
+import { createHostedGame, startHostedGame, processJoinRequest, processPlayerAction } from '../gameServer/gameServer'
 import { settings } from '../state/settings'
-import { getGameInfoMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody } from '../state/messageStore'
+import { getGameInfoMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody, GamePlayerActionBody, sendGamePlayerActionMessage } from '../state/messageStore'
 import { GameView } from '../games/TicTacToe/components/GameView'
 
 type ObjectGroup<T> = {
@@ -41,9 +41,9 @@ const gameViewStateDatabase = new Map<string, object>()
 const gameInfoDatabase = new Map<string, GameInfo>()
 getGameInfoMessages().then(
     gameInfoMessages => {
-    const reverse = true
-    orderBy(gameInfoMessages, m => m.when, reverse).forEach(processMessage)
-  }
+      const reverse = true
+      orderBy(gameInfoMessages, m => m.when, reverse).forEach(processMessage)
+    }
 ).then(
   () => {
     subscribeMessageCallback(processMessage)
@@ -67,6 +67,11 @@ function processMessage (message: RichMessage) {
       // TODO: decrypt message (once we have encryption)
       gameViewStateDatabase.set(viewState.gameId, viewState.viewState)
       gameUpdatedSubscriberMap.forEach((callback) => callback(viewState.gameId))
+    }
+  } else if (message.type === MessageType.PlayerAction) {
+    const playerAction: GamePlayerActionBody = message.body
+    if (locallyHostedGameIds.has(playerAction.gameId)) {
+      processPlayerAction(playerAction.gameId, playerAction.player.id, playerAction.action)
     }
   }
 }
@@ -142,6 +147,17 @@ export function startGame (gameId: string) {
   startHostedGame(gameId)
 }
 
+export function sendPlayerAction (gameId: string, action: object) {
+  // TODO: single way to get player info, correctly
+  const player: GamePlayer = {
+    id: settings.getUserId(),
+    name: settings.getUserName() || '',
+    isHost: false,
+    publicKey: new Uint8Array()
+  }
+  sendGamePlayerActionMessage(gameId, player, action)
+}
+
 export function getCurrentGameInfo (): GameInfo | undefined {
   // HACK: for now using local game database instead of from server
   // ASSUME: can only be in one game at a time, so return first match
@@ -154,6 +170,7 @@ export function renderGameView (gameId: string) {
   const gameTitleId = game.settings.gameTitleId
   const view = gameViewRegistry.get(gameTitleId)
   const viewState = gameViewStateDatabase.get(gameId)
-  const props = { viewState }
+  const playerActionCallback = (action: object) => sendPlayerAction(gameId, action)
+  const props = { viewState, playerActionCallback }
   return view(props)
 }

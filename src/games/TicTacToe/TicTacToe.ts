@@ -17,7 +17,21 @@ export type GameViewState = {
   board: TileState[][],
   isPlayerTurn: boolean,
   playerName: string,
-  opponentName: string
+  opponentName: string,
+  playerNumber: number, // 1 = P1; 2 = P2
+  status: GameStatus
+}
+
+export type GamePlayerAction = {
+  row: number,
+  col: number
+}
+
+function shuffle (array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
 
 export class TicTacToeGame {
@@ -25,8 +39,8 @@ export class TicTacToeGame {
   private boardState: TileState[][]
   private whoseTurn: number
   private status: GameStatus = GameStatus.NotDone
-  private boardW: number = 3
-  private boardH: number = 3
+  private boardRows: number = 3
+  private boardCols: number = 3
 
   constructor (players: string[]) {
     this.players = Array.from(players)
@@ -36,21 +50,25 @@ export class TicTacToeGame {
     if (this.players[0] === this.players[1]) {
       throw new Error('Both players are the same: ' + players)
     }
+    shuffle(this.players)
 
-    this.boardState = new Array(this.boardW).fill(null).map(() => new Array(this.boardH).fill(TileState.Blank))
+    this.boardState = new Array(this.boardRows).fill(null).map(() => new Array(this.boardCols).fill(TileState.Blank))
     this.whoseTurn = 0
   }
 
-  public act (player: string, action: {x: number, y: number}) {
-    const { x, y } = action
+  public act (player: string, action: GamePlayerAction) {
+    const { row, col } = action
 
+    if (this.status !== GameStatus.NotDone) {
+      throw new Error('Cannot play when game is over! Status: ' + this.status)
+    }
     if (player !== this.players[this.whoseTurn]) {
       throw new Error('Invalid player for move: ' + player)
     }
-    if (this.boardState[x][y] !== TileState.Blank) {
+    if (this.boardState[row][col] !== TileState.Blank) {
       throw new Error('Cannot play on a non-blank space')
     }
-    this.boardState[x][y] = this.whoseTurn === 0 ? TileState.P1 : TileState.P2
+    this.boardState[row][col] = this.whoseTurn === 0 ? TileState.P1 : TileState.P2
 
     this.updateStatus()
 
@@ -66,9 +84,11 @@ export class TicTacToeGame {
 
     return {
       board: this.boardState,
-      isPlayerTurn: player === this.players[this.whoseTurn],
+      isPlayerTurn: this.status === GameStatus.NotDone && player === this.players[this.whoseTurn],
       playerName: player,
-      opponentName: this.players.find(p => p !== player) || ''
+      opponentName: this.players.find(p => p !== player) || '',
+      playerNumber: this.players.indexOf(player) + 1,
+      status: this.status
     }
   }
 
@@ -98,9 +118,9 @@ export class TicTacToeGame {
 
     // No winner. If all spaces are taken then it's a draw.
     let countBlanks = 0
-    for (let x = 0; x < this.boardW; x++) {
-      for (let y = 0; y < this.boardH; y++) {
-        if (this.boardState[x][y] === TileState.Blank) {
+    for (let r = 0; r < this.boardRows; r++) {
+      for (let c = 0; c < this.boardCols; c++) {
+        if (this.boardState[r][c] === TileState.Blank) {
           countBlanks++
         }
       }

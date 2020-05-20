@@ -61,6 +61,12 @@ export type GameJoinRequestBody = {
   player: GamePlayer
 }
 
+export type GamePlayerActionBody = {
+  gameId: string,
+  player: GamePlayer,
+  action: object
+}
+
 type TypedMessage = {
   type: MessageType,
   body: any
@@ -204,7 +210,13 @@ export async function sendGameViewStateMessage (gameId: string, playerId: string
   return sendTypedMessage(MessageType.GameViewState, body)
 }
 
-export async function sendGamePlayerActionMessage () {
+export async function sendGamePlayerActionMessage (gameId: string, player: GamePlayer, action: object) {
+  const body: GamePlayerActionBody = {
+    gameId: gameId,
+    player: player,
+    action: action
+  }
+  return sendTypedMessage(MessageType.PlayerAction, body)
 }
 
 async function sendTypedMessage (type: MessageType, body: object) {

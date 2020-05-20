@@ -174,7 +174,12 @@ export const GameWindow: React.FunctionComponent = (props) => {
   }
 
   if (isPlaying) {
-    return renderGameView(game.id)
+    // TODO: provide a way to exit the game
+    return (
+      <div className={style.gameWindow}>
+        {renderGameView(game.id)}
+      </div>
+    )
   }
 
   return (
