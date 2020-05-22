@@ -6,8 +6,8 @@
   "scripts": {
     "test": "parcel build --no-minify --no-source-maps --no-autoinstall src/baseDir.ts 'src/**/*.test.ts' 'src/**/*.test.tsx' && jest 'dist/.*\\.test\\.js'",
     "lint": "tslint -p tsconfig.json -c tslint.json",
-    "build": "parcel build 'src/index.html'",
-    "serve": "parcel serve 'src/index.html'"
+    "build": "parcel build src/index.html",
+    "serve": "parcel serve src/index.html"
   },
   "author": "nbone",
   "license": "ISC",
