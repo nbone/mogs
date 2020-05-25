@@ -35,7 +35,7 @@ Player actions:
  - GAME ENGINE updates state; GAME SERVER posts one message per player with updated state.
 */
 
-import uuid from 'uuid'
+import { v4 as uuid4 } from 'uuid'
 import { GameSettings, GameRecord, GamePlayer, GameStatus, toGameInfo } from '../gameController/types'
 import { sendGameInfoMessage, sendGameViewStateMessage } from '../state/messageStore'
 import { TicTacToeGame } from '../games/TicTacToe/TicTacToe'
@@ -47,7 +47,7 @@ export function createHostedGame (gameSettings: GameSettings, host: GamePlayer):
 
   // 1. create new game entity
   const game = new GameRecord(
-    uuid.v4(),
+    uuid4(),
     gameSettings,
     GameStatus.Preparing,
     [host],

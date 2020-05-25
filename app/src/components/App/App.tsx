@@ -119,13 +119,15 @@ const GamesList: React.FunctionComponent = (props) => {
   return (
     <table>
       <thead>
-        <th>Game</th>
-        <th>Status</th>
-        <th>Host</th>
-        <th></th>
+        <tr>
+          <th>Game</th>
+          <th>Status</th>
+          <th>Host</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
-        {games?.map(g => <GameDisplay game={g} />)}
+        {games?.map(g => <GameDisplay key={g.id} game={g} />)}
       </tbody>
     </table>
   )
@@ -153,7 +155,7 @@ const GameDisplay: React.FunctionComponent = (props) => {
   }
 
   return (
-    <tr key={game.id}>
+    <tr>
       <td>{game.settings.gameTitleId}</td>
       <td>{gameStatusToDisplayString(game.status)}</td>
       <td>{game.players.find(p => p.isHost).name}</td>

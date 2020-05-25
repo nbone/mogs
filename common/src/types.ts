@@ -11,13 +11,13 @@ export type Message = {
  */
 export type MessageFromServer = {
   id: string
-  // character_frequencies: {[key: string]: number}
   when: number
 } & Message
 
+/**
+ * Server metadata.
+ */
 export type Metadata = {
-  server_name: string
-  startup_uptime: string
-  number_of_messages: number
-  most_recent_messsage: MessageFromServer
+  upSince: string
+  messageCount: number
 }

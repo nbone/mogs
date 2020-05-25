@@ -1,4 +1,4 @@
-import { Message, MessageFromServer } from '../types'
+import { Message, MessageFromServer } from '@mogs/common'
 
 export function getMessages (baseUrl): Promise<MessageFromServer[]> {
   return fetch(`${baseUrl}/messages`)

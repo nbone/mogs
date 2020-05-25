@@ -1,0 +1,26 @@
+{
+  "name": "@mogs/common",
+  "version": "0.1.0",
+  "description": "Common code and type definitions for mogs-server and mogs-app.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
+  "homepage": "https://github.com/nbone/mogs",
+  "author": "nbone",
+  "license": "ISC",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nbone/mogs.git",
+    "directory": "common"
+  },
+  "scripts": {
+    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "build": "tsc --declaration"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tslint": "^6.1.2",
+    "tslint-config-standard": "^9.0.0",
+    "typescript": "^3.9.3"
+  }
+}

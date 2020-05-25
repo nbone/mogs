@@ -7,7 +7,7 @@
   width: 100vw;
   height: 44px;
   padding: 4px;
-  background: linear-gradient(0deg, hsl(240, 40%, 6%), transparent);
+  background: hsl(240, 40%, 6%);
 }
 
 .title {

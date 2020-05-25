@@ -3,14 +3,14 @@
 // Can poll for new messages and push-notify subscribers based on filters.
 // If we want to swap backends (e.g. use a dummy local backend for testing), this is where we do it.
 
-import uuid from 'uuid'
-import { Message, MessageFromServer } from '../types'
+import { v4 as uuid4 } from 'uuid'
+import { Message, MessageFromServer } from '@mogs/common'
 import { getMessages, postMessage } from '../api'
 import { settings } from './settings'
 import { GameInfo, GamePlayer } from '../gameController/types'
 
 const RICH_MESSAGE_MARKER = '\x01'
-const USE_LOCAL_STORE = true
+const USE_LOCAL_STORE = false
 
 // TODO: maybe better to use IndexedDB than local storage (but also this local store is a hack)?
 class LocalMessages {
@@ -31,7 +31,9 @@ class LocalMessages {
   }
 }
 const localMessages = new LocalMessages()
-const seenMessageIds = new Set<string>(localMessages.get().map(m => m.id))
+const seenMessageIds = USE_LOCAL_STORE
+  ? new Set<string>(localMessages.get().map(m => m.id))
+  : new Set<string>()
 
 export enum MessageType {
   Plain,          // plain text message, for chat
@@ -40,15 +42,6 @@ export enum MessageType {
   GameViewState,  // game view state update; addressed to each player individually
   PlayerAction    // player action in the game; addressed to game server
 }
-
-/*
-Kinds of game messages:
- - Game view state updates for individual players.
- - Game status updates for games not in progress (e.g. create, start, finish); broadcast to all listeners.
- - Player actions in game; addressed to game server.
- - Player join requests; addressed to game server.
- - ... anything else???
-*/
 
 export type GameViewStateBody = {
   gameId: string,
@@ -86,7 +79,7 @@ type MessageCallback = (message: RichMessage) => any
 const messageSubscriberMap: Map<string, MessageCallback> = new Map()
 export function subscribeMessageCallback (callback: MessageCallback): string {
   // TODO: filter?
-  const id = uuid.v4()
+  const id = uuid4()
   messageSubscriberMap.set(id, callback)
   return id
 }
@@ -95,12 +88,14 @@ export function unsubscribeMessageCallback (id: string) {
   messageSubscriberMap.delete(id)
 }
 
-// POLL for new messages (currently LOCAL ONLY, because that's what we're using for development)
-const messagePollInterval = setInterval(() => {
-  const messages: RichMessage[] = localMessages.get()
+// POLL for new messages
+const messagePollInterval = setInterval(async () => {
+  const messages: RichMessage[] = USE_LOCAL_STORE
+    ? localMessages.get()
+    : await getRichMessagesFromServer()
   if (messages.length > seenMessageIds.size) {
     // Newest messages are first, so process in reverse order
-    for (let i = seenMessageIds.size; i >= 0; i--) {
+    for (let i = messages.length - seenMessageIds.size - 1; i >= 0; i--) {
       const message = messages[i]
       if (!seenMessageIds.has(message.id)) {
         seenMessageIds.add(message.id)
@@ -148,7 +143,7 @@ function toRichMessage (message: MessageFromServer): RichMessage {
 
 function toLocalMessageFromServer (message: Message): MessageFromServer {
   return {
-    id: uuid.v4(),
+    id: uuid4(),
     when: Date.now(),
     from: message.from,
     message: message.message

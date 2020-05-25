@@ -1,9 +1,9 @@
 
-import uuid from 'uuid'
+import { v4 as uuid4 } from 'uuid'
 
 // TODO: Eventually we'll autogenerate the User ID when the user name is set and put it in localStorage.
 // BUT for now we're keeping it in memory to facilitate multi-user testing in the same browser.
-const userId: string = uuid.v4()
+const userId: string = uuid4()
 
 export const settings = {
   getServerUrl: () => {

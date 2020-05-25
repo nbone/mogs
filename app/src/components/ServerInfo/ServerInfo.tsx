@@ -38,13 +38,13 @@ export const ServerInfo: React.FunctionComponent = () => {
       <i className={style.iconServer}></i>
       <div className={style.panel} >
         <div className={style.serverName} >
-          Connected to { meta?.server_name }
+          Connected to {serverUrl}
         </div>
         <div className={style.startupUptime} >
-          Up since { meta?.startup_uptime }
+          Up since {meta?.upSince}
         </div>
         <div className={style.messageCount} >
-          Message count { meta?.number_of_messages }
+          Message count {meta?.messageCount}
         </div>
       </div>
     </div>
