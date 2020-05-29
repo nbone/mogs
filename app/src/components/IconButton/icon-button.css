@@ -1,0 +1,18 @@
+.icon {
+  display: block;
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 24px;
+  font-family: 'Material Icons Round';
+  color: rgba(255,255,255,60%);
+  border-radius: 50%;
+  text-align: center;
+  cursor: default;
+}
+
+.icon.active {
+  background-color: rgba(255,255,255,7%);
+  color: rgba(255,255,255,87%);
+  text-shadow: 0 0 12px;
+}

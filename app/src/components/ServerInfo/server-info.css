@@ -1,32 +1,12 @@
-.serverInfo i.iconServer {
-  display: block;
-  width: 40px;
-  height: 40px;
-  background-image: url('../../../static/img/icon_server_info.svg');
-  background-repeat: no-repeat;
-  background-size: 32px;
-  background-position: center;
-}
-
 .serverInfo .panel {
-  display: none;
-}
-
-.serverInfo:hover .panel {
   display: block;
   position: absolute;
-  top: 44px;
+  top: 50px;
   right: 8px;
-  background-color: hsla(240, 40%, 10%, 0.75);
   border-radius: 4px;
   padding: 12px;
-  font-size: 18px;
 }
 
 .error {
   color: red;
-}
-
-.serverInfo > div {
-  padding: 10px;
 }

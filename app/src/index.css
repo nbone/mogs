@@ -1,5 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Gruppo');
 @import url('https://fonts.googleapis.com/css2?family=Audiowide');
+@import url('https://fonts.googleapis.com/css2?family=Saira:wght@300;600');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
 * {
   box-sizing: border-box;
@@ -60,7 +61,7 @@ a {
 body {
   min-height: 100vh;
   background: radial-gradient(hsl(240, 60%, 18%), hsl(240, 40%, 6%));
-  color: #d2dce2;
-  font-family: 'Gruppo';
+  color: rgba(255, 255, 255, 87%);
   font-size: 16px;
+  font-family: 'Saira';
 }

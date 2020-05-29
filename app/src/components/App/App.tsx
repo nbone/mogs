@@ -1,32 +1,14 @@
 import React, { useEffect, useState } from 'react'
 
 import { settings } from '../../state/settings'
+import { Profile } from '../Profile'
 import { ServerInfo } from '../ServerInfo'
 import { ChatPanel } from '../ChatPanel'
 import { listGames, createGame, getCurrentGameInfo, joinGame, startGame, renderGameView, subscribeGameUpdatedCallback, unsubscribeGameUpdatedCallback } from '../../gameController/gameController'
 import { GameStatus, GameInfo } from '../../gameController/types'
+import { Panel } from '../Panel'
 
 const style = require('./app.css')
-
-export const Profile: React.FunctionComponent = () => {
-  const [name, setName] = useState(settings.getUserName() || '')
-
-  function handleChange (event) {
-    const val = event.target.value
-    settings.setUserName(val)
-    setName(val)
-  }
-
-  return (
-    <div className={style.profile}>
-      <i className={style.iconUser}></i>
-      <div className={style.panel}>
-        You are signed in as<br />
-        <input type='text' name='name' value={name} onChange={handleChange} />
-      </div>
-    </div>
-  )
-}
 
 export const Main: React.FunctionComponent = () => {
   const [gameList, setGameList] = useState<GameInfo[]>()
@@ -85,7 +67,7 @@ export const Lobby: React.FunctionComponent = (props) => {
   }
 
   return (
-    <div className={style.lobby}>
+    <Panel className={style.lobby}>
       <p>
         Lobby todo...
         ONLY display this if not currently JOINED in a game.
@@ -95,7 +77,7 @@ export const Lobby: React.FunctionComponent = (props) => {
       </p>
       <button onClick={showCreateDialog}>Create new game</button>
       <GamesList games={games} />
-    </div>
+    </Panel>
   )
 }
 

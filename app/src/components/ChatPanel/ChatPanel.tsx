@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react'
 import TimeAgo from 'timeago-react'
 
 import { getChatMessages, sendChatMessage, subscribeMessageCallback, RichMessage, unsubscribeMessageCallback } from '../../state/messageStore'
+import { Panel } from '../Panel'
+import { IconButton } from '../IconButton'
 
 const style = require('./chat-panel.css')
 
 export const ChatPanel: React.FunctionComponent = (props) => {
   const [refresh, setRefresh] = useState<number>(0)
+  const [panelVisible, setPanelVisible] = useState(false)
 
   useEffect(() => {
     const subId = subscribeMessageCallback(message => {
@@ -20,12 +23,17 @@ export const ChatPanel: React.FunctionComponent = (props) => {
 
   // TODO: toggle panel visibility on click (here), not hover (css)
   return (
-    <div className={style.chatPanel}>
-      <i className={style.iconChat}></i>
-      <div className={style.panel}>
-        <MessagesListFetcher refresh={refresh} />
-        <MessagePost />
-      </div>
+    <div className={style.chatPanel}
+      onMouseEnter={() => setPanelVisible(true)}
+      onMouseLeave={() => setPanelVisible(false)}>
+      <IconButton iconName='chat' isActive={panelVisible} />
+      {panelVisible ?
+        <Panel className={style.panel}>
+          <MessagesListFetcher refresh={refresh} />
+          <MessagePost />
+        </Panel>
+        : ''
+      }
     </div>
   )
 }
