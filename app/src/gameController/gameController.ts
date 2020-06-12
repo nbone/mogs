@@ -2,7 +2,7 @@
 
 import { Key } from 'react'
 import { shortid } from '@mogs/common'
-import { GameSettings, GameInfo, GamePlayer } from './types'
+import { GameSettings, GameInfo, GamePlayer, GameStatus } from './types'
 import { createHostedGame, startHostedGame, processJoinRequest, processPlayerAction } from '../gameServer/gameServer'
 import { settings } from '../state/settings'
 import { getGameInfoMessages, MessageType, RichMessage, subscribeMessageCallback, sendGameJoinRequestMessage, GameJoinRequestBody, GameViewStateBody, GamePlayerActionBody, sendGamePlayerActionMessage } from '../state/messageStore'
@@ -161,8 +161,11 @@ export function sendPlayerAction (gameId: string, action: object) {
 export function getCurrentGameInfo (): GameInfo | undefined {
   // HACK: for now using local game database instead of from server
   // ASSUME: can only be in one game at a time, so return first match
+  // TODO: separate concepts of "participating" vs. "watching", so players aren't forced out when game finishes
   const playerId = settings.getUserId() || ''
-  return listGames().find(g => g.players.find(p => p.id === playerId))
+  const isCurrent = (game: GameInfo) => game.status === GameStatus.Preparing || game.status === GameStatus.Playing
+  const isMine = (game: GameInfo) => game.players.find(p => p.id === playerId)
+  return listGames().find(g => isCurrent(g) && isMine(g))
 }
 
 export function renderGameView (gameId: string) {

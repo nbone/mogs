@@ -36,24 +36,31 @@ Player actions:
 */
 
 import { shortid } from '@mogs/common'
-import { GameSettings, GameRecord, GamePlayer, GameStatus, toGameInfo } from '../gameController/types'
+import { GameSettings, GamePlayer, GameStatus, GameInfo } from '../gameController/types'
+import { GameEngine, PlayerData } from './types'
+import { gameEngineRegistry } from './gameEngineRegistry'
 import { sendGameInfoMessage, sendGameViewStateMessage } from '../state/messageStore'
-import { TicTacToeGame } from '../games/TicTacToe/TicTacToe'
 
-const hostedGames = new Map<string, GameRecord>()
+type HostedGame = {
+  id: string,
+  settings: GameSettings,
+  status: GameStatus,
+  players: GamePlayer[],
+  engine?: GameEngine
+}
+
+const hostedGames = new Map<string, HostedGame>()
 
 export function createHostedGame (gameSettings: GameSettings, host: GamePlayer): string {
   // TODO: validate gameSettings
 
   // 1. create new game entity
-  const game = new GameRecord(
-    shortid(),
-    gameSettings,
-    GameStatus.Preparing,
-    [host],
-    [],
-    {}
-  )
+  const game: HostedGame = {
+    id: shortid(),
+    settings: gameSettings,
+    status: GameStatus.Preparing,
+    players: [host]
+  }
 
   // 2. insert into game data store
   hostedGames.set(game.id, game)
@@ -64,47 +71,65 @@ export function createHostedGame (gameSettings: GameSettings, host: GamePlayer):
   return game.id
 }
 
-// TODO: invert dependency
-const gameRegistry = new Map<string, object>([
-  ['TicTacToe', {
-    engine: TicTacToeGame
-  }]
-])
-
 export function startHostedGame (gameId: string) {
-  // TODO: validate gameId
-  const game = hostedGames.get(gameId)
-  const gameEngine = gameRegistry.get(game.settings.gameTitleId).engine
-  const instance = new gameEngine(game.players.map(p => p.id)) // TODO: consistent engine interface
-  game.gameState = instance
-  game.status = GameStatus.Playing
-  game.players.forEach(p => {
-    publishGameState(gameId, p)
-  })
+  const game = getHostedGame(gameId)
+  if (game.status !== GameStatus.Preparing) {
+    throw new Error(`Game cannot be started: ${JSON.stringify(game)}.`)
+  }
+  game.engine = gameEngineRegistry.getGameEngineInstance(game.settings.gameTitleId, game.players.map(p => p.id), game.settings.options)
+  const gameState = game.engine.start()
+  game.status = gameState.isFinished ? GameStatus.Finished : GameStatus.Playing
   hostedGames.set(gameId, game)
+  gameState.playerViewStates.forEach(pd => {
+    publishGameState(game.id, pd.playerId, pd.data)
+  })
   sendGameInfoMessage(toGameInfo(game))
 }
 
 export function processPlayerAction (gameId: string, playerId: string, action: object) {
-  const game = hostedGames.get(gameId)
-  game.gameState.act(playerId, action)
-  game.players.forEach(p => {
-    publishGameState(gameId, p)
+  const game = getHostedGame(gameId)
+  if (!game.engine || game.status !== GameStatus.Playing) {
+    throw new Error(`Game is not currently playing: ${JSON.stringify(game)}.`)
+  }
+  const playerActions: PlayerData[] = [{ playerId: playerId, data: action }]
+  const gameState = game.engine.update(playerActions)
+  gameState.playerViewStates.forEach(pd => {
+    publishGameState(game.id, pd.playerId, pd.data)
   })
+  if (gameState.isFinished) {
+    game.status = GameStatus.Finished
+    hostedGames.set(gameId, game)
+    sendGameInfoMessage(toGameInfo(game))
+  }
 }
 
 export function processJoinRequest (gameId: string, player: GamePlayer) {
-  const game = hostedGames.get(gameId)
-  if (game?.status === GameStatus.Preparing && game?.players.length < game?.settings.maxPlayers) {
+  const game = getHostedGame(gameId)
+  if (game.status === GameStatus.Preparing && game.players.length < game.settings.maxPlayers) {
     game.players.push(player)
     hostedGames.set(gameId, game)
     sendGameInfoMessage(toGameInfo(game))
   }
 }
 
-function publishGameState (gameId: string, player: GamePlayer) {
-  const game = hostedGames.get(gameId)
+function publishGameState (gameId: string, playerId: string, viewState: object) {
   // TODO: encrypt viewState with player's public key
-  const viewState = game.gameState.getGameViewStateForPlayer(player.id)
-  sendGameViewStateMessage(gameId, player.id, viewState)
+  sendGameViewStateMessage(gameId, playerId, viewState)
+}
+
+function getHostedGame (gameId: string): HostedGame {
+  const game = hostedGames.get(gameId)
+  if (!game) {
+    throw new Error(`Unknown game ID ${gameId}.`)
+  }
+  return game
+}
+
+function toGameInfo (hostedGame: HostedGame): GameInfo {
+  return new GameInfo(
+    hostedGame.id,
+    hostedGame.settings,
+    hostedGame.status,
+    hostedGame.players
+  )
 }

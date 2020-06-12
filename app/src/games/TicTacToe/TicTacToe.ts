@@ -1,5 +1,7 @@
 // Game engine for Tic-Tac-Toe
 
+import { GameEngine, GameUpdateResult, PlayerData } from '../../gameServer/types'
+
 export enum TileState {
   Blank = ' ',
   P1 = 'X',
@@ -34,7 +36,7 @@ function shuffle (array: any[]) {
   }
 }
 
-export class TicTacToeGame {
+export class TicTacToeGame implements GameEngine {
   private players: string[]
   private boardState: TileState[][]
   private whoseTurn: number
@@ -56,7 +58,29 @@ export class TicTacToeGame {
     this.whoseTurn = 0
   }
 
-  public act (player: string, action: GamePlayerAction) {
+  public start (): GameUpdateResult {
+    return this.getUpdateResult()
+  }
+
+  public update (playerActions: PlayerData[]): GameUpdateResult {
+    playerActions.forEach(action => this.act(action.playerId, action.data as GamePlayerAction))
+    return this.getUpdateResult()
+  }
+
+  private getUpdateResult (): GameUpdateResult {
+    const playerViewStates = this.players.map(pid => {
+      return {
+        playerId: pid,
+        data: this.getGameViewStateForPlayer(pid)
+      }
+    })
+    return {
+      isFinished: this.isFinished(),
+      playerViewStates: playerViewStates
+    }
+  }
+
+  private act (player: string, action: GamePlayerAction) {
     const { row, col } = action
 
     if (this.status !== GameStatus.NotDone) {
@@ -77,7 +101,7 @@ export class TicTacToeGame {
     }
   }
 
-  public getGameViewStateForPlayer (player: string): GameViewState {
+  private getGameViewStateForPlayer (player: string): GameViewState {
     if (!this.players.includes(player)) {
       throw new Error('Invalid player: ' + player)
     }
@@ -90,6 +114,10 @@ export class TicTacToeGame {
       playerNumber: this.players.indexOf(player) + 1,
       status: this.status
     }
+  }
+
+  private isFinished (): boolean {
+    return this.status !== GameStatus.NotDone
   }
 
   private updateStatus () {
@@ -128,9 +156,8 @@ export class TicTacToeGame {
 
     if (countBlanks === 0) {
       this.status = GameStatus.Draw
+    } else {
+      this.status = GameStatus.NotDone
     }
-
-    // Game still going
-    this.status = GameStatus.NotDone
   }
 }
