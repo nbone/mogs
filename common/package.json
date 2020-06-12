@@ -1,6 +1,6 @@
 {
   "name": "@mogs/common",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Common code and type definitions for mogs-server and mogs-app.",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
@@ -17,8 +17,11 @@
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "build": "tsc --declaration"
   },
-  "dependencies": {},
+  "dependencies": {
+    "uuid": "^8.1.0"
+  },
   "devDependencies": {
+    "@types/uuid": "^8.0.0",
     "tslint": "^6.1.2",
     "tslint-config-standard": "^9.0.0",
     "typescript": "^3.9.3"

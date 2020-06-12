@@ -3,8 +3,7 @@
 // Can poll for new messages and push-notify subscribers based on filters.
 // If we want to swap backends (e.g. use a dummy local backend for testing), this is where we do it.
 
-import { v4 as uuid4 } from 'uuid'
-import { Message, MessageFromServer } from '@mogs/common'
+import { Message, MessageFromServer, shortid } from '@mogs/common'
 import { getMessages, postMessage } from '../api'
 import { settings } from './settings'
 import { GameInfo, GamePlayer } from '../gameController/types'
@@ -79,7 +78,7 @@ type MessageCallback = (message: RichMessage) => any
 const messageSubscriberMap: Map<string, MessageCallback> = new Map()
 export function subscribeMessageCallback (callback: MessageCallback): string {
   // TODO: filter?
-  const id = uuid4()
+  const id = shortid()
   messageSubscriberMap.set(id, callback)
   return id
 }
@@ -143,7 +142,7 @@ function toRichMessage (message: MessageFromServer): RichMessage {
 
 function toLocalMessageFromServer (message: Message): MessageFromServer {
   return {
-    id: uuid4(),
+    id: shortid(),
     when: Date.now(),
     from: message.from,
     message: message.message

@@ -1,7 +1,7 @@
 // Abstracts all interactions with the game server and individual games.
 
-import { v4 as uuid4 } from 'uuid'
 import { Key } from 'react'
+import { shortid } from '@mogs/common'
 import { GameSettings, GameInfo, GamePlayer } from './types'
 import { createHostedGame, startHostedGame, processJoinRequest, processPlayerAction } from '../gameServer/gameServer'
 import { settings } from '../state/settings'
@@ -17,7 +17,7 @@ type GameUpdatedCallback = (gameId: string) => any
 const gameUpdatedSubscriberMap: Map<string, GameUpdatedCallback> = new Map()
 export function subscribeGameUpdatedCallback (callback: GameUpdatedCallback): string {
   // TODO: allow subscribing to only some game ids?
-  const id = uuid4()
+  const id = shortid()
   gameUpdatedSubscriberMap.set(id, callback)
   return id
 }

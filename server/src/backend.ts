@@ -1,8 +1,7 @@
 /**
  * Backend message store for the MOGS server.
  */
-import { v4 as uuid4 } from 'uuid'
-import { Message, MessageFromServer } from '@mogs/common'
+import { Message, MessageFromServer, shortid } from '@mogs/common'
 
 // For starters use a simple in-memory backend (no persistence)
 const ALL_MESSAGES: MessageFromServer[] = []
@@ -23,7 +22,7 @@ export async function insertMessage (message: Message): Promise<MessageFromServe
 
 function toMessageFromServer (message: Message): MessageFromServer {
   return {
-    id: uuid4(),
+    id: shortid(),
     when: Date.now(),
     from: message.from,
     message: message.message

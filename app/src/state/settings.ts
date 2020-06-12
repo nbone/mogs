@@ -1,9 +1,9 @@
 
-import { v4 as uuid4 } from 'uuid'
+import { shortid } from '@mogs/common'
 
 // TODO: Eventually we'll autogenerate the User ID when the user name is set and put it in localStorage.
 // BUT for now we're keeping it in memory to facilitate multi-user testing in the same browser.
-const userId: string = uuid4()
+const userId: string = shortid()
 
 export const settings = {
   getServerUrl: () => {
