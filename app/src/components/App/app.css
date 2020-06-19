@@ -2,35 +2,10 @@
   /* background-image: url('../../../static/img/table-bg.png'); */
 }
 
-.header {
-  display: flex;
-  width: 100vw;
-  height: 54px;
-  padding: 5px;
-  background: hsl(240, 40%, 6%);
-}
-
-.title {
-  flex-basis: 100%;
-  padding: 0 10px;
-  font-family: 'Audiowide';
-  font-size: 28px;
-  line-height: 44px;
-}
-
 .main {
   width: 100vw;
   height: calc(100vh - 100px);
   padding: 10px;
-}
-
-.lobby {
-  margin: 20px auto;
-  width: 660px;
-  padding: 30px;
-  background-color: hsla(240, 60%, 75%, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  border-radius: 10px;
 }
 
 .gameWindow {

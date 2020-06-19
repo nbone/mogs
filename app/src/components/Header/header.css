@@ -1,0 +1,15 @@
+.header {
+  display: flex;
+  width: 100vw;
+  height: 54px;
+  padding: 5px;
+  background: hsl(240, 40%, 6%);
+}
+
+.title {
+  flex-basis: 100%;
+  padding: 0 10px;
+  font-family: 'Audiowide';
+  font-size: 28px;
+  line-height: 44px;
+}
