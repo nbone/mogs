@@ -3,18 +3,20 @@ import React, { useState } from 'react'
 import { createGame, joinGame } from '../../gameController/gameController'
 import { GameStatus } from '../../gameController/types'
 import { Panel } from '../Panel'
+import { useHistory } from 'react-router-dom'
 
 const style = require('./lobby.css')
 
 export const Lobby: React.FunctionComponent = (props) => {
   const { games } = props
   const [renderCreateDialog, setRenderCreateDialog] = useState<boolean>(false)
+  let history = useHistory()
 
   function showCreateDialog (event) {
     setRenderCreateDialog(true)
   }
 
-  function doCreateGame (event) {
+  async function doCreateGame (event) {
     setRenderCreateDialog(false)
     const gameSettings = {
       gameTitleId: 'TicTacToe',
@@ -22,7 +24,9 @@ export const Lobby: React.FunctionComponent = (props) => {
       maxPlayers: 2,
       options: {}
     }
-    createGame(gameSettings)
+    const gameId = await createGame(gameSettings)
+    console.log(`created gameId ${gameId}`)
+    history.push(`/game/${gameId}`)
   }
 
   if (renderCreateDialog) {
@@ -74,9 +78,11 @@ const GamesList: React.FunctionComponent = (props) => {
 
 const GameDisplay: React.FunctionComponent = (props) => {
   const { game } = props
+  const history = useHistory()
 
   function handleJoinClick (event) {
     joinGame(game.id)
+    history.push(`/game/${game.id}`)
   }
 
   return (

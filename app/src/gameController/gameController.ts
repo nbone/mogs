@@ -46,12 +46,13 @@ getGameInfoMessages().then(
     }
 ).then(
   () => {
+    console.log('SUBSCRIBING HERE!')
     subscribeMessageCallback(processMessage)
   }
 )
 
 function processMessage (message: RichMessage) {
-  console.log(message)
+  // console.log(message)
   if (message.type === MessageType.GameInfo) {
     const gameInfo: GameInfo = message.body
     gameInfoDatabase.set(gameInfo.id, gameInfo)
@@ -65,6 +66,7 @@ function processMessage (message: RichMessage) {
     const viewState: GameViewStateBody = message.body
     if (viewState.to === settings.getUserId()) {
       // TODO: decrypt message (once we have encryption)
+      console.log(viewState)
       gameViewStateDatabase.set(viewState.gameId, viewState.viewState)
       gameUpdatedSubscriberMap.forEach((callback) => callback(viewState.gameId))
     }
@@ -116,25 +118,30 @@ export function listGames (): GameInfo[] {
   return Array.from(gameInfoDatabase.values())
 }
 
-export function createGame (gameSettings: GameSettings) {
+export function getGameInfo (gameId: string): GameInfo | undefined {
+  return gameInfoDatabase.get(gameId)
+}
+
+export async function createGame (gameSettings: GameSettings): Promise<string> {
   // TODO: get ALL player info from settings, and handle error if missing
   const playerName = settings.getUserName() || ''
   const publicKey = new Uint8Array()
   const host = {
-    id: settings.getUserId(),
+    id: settings.getUserId()!,
     name: playerName,
     isHost: true,
     publicKey: publicKey
   }
 
-  const gameId = createHostedGame(gameSettings, host)
+  const gameId = await createHostedGame(gameSettings, host)
   locallyHostedGameIds.add(gameId)
+  return gameId
 }
 
 export function joinGame (gameId: string) {
   // TODO: single way to get player info, correctly
   const player: GamePlayer = {
-    id: settings.getUserId(),
+    id: settings.getUserId()!,
     name: settings.getUserName() || '',
     isHost: false,
     publicKey: new Uint8Array()
@@ -168,12 +175,26 @@ export function getCurrentGameInfo (): GameInfo | undefined {
   return listGames().find(g => isCurrent(g) && isMine(g))
 }
 
-export function renderGameView (gameId: string) {
+export function get_renderGameView_props (gameId: string) {
+  console.log(`GETTING game view for game id ${gameId}.`)
   const game = gameInfoDatabase.get(gameId)
   const gameTitleId = game.settings.gameTitleId
   const view = gameViewRegistry.get(gameTitleId)
   const viewState = gameViewStateDatabase.get(gameId)
   const playerActionCallback = (action: object) => sendPlayerAction(gameId, action)
-  const props = { viewState, playerActionCallback }
+  const refresh = shortid() // TODO: this was an attempt to force rerender of game view, but it doesn't work :(
+  const props = { viewState, playerActionCallback, refresh }
+  return props
+}
+
+export function renderGameView (gameId: string) {
+  console.log(`Rendering game view for game id ${gameId}.`)
+  const game = gameInfoDatabase.get(gameId)
+  const gameTitleId = game.settings.gameTitleId
+  const view = gameViewRegistry.get(gameTitleId)
+  const viewState = gameViewStateDatabase.get(gameId)
+  const playerActionCallback = (action: object) => sendPlayerAction(gameId, action)
+  const refresh = shortid() // TODO: this was an attempt to force rerender of game view, but it doesn't work :(
+  const props = { viewState, playerActionCallback, refresh }
   return view(props)
 }

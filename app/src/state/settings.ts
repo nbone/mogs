@@ -1,10 +1,6 @@
 
 import { shortid } from '@mogs/common'
 
-// TODO: Eventually we'll autogenerate the User ID when the user name is set and put it in localStorage.
-// BUT for now we're keeping it in memory to facilitate multi-user testing in the same browser.
-const userId: string = shortid()
-
 export const settings = {
   getServerUrl: () => {
     return localStorage.getItem('serverUrl')
@@ -21,6 +17,11 @@ export const settings = {
   },
 
   getUserId: () => {
+    let userId = localStorage.getItem('userId')
+    if (!userId) {
+      userId = shortid()
+      localStorage.setItem('userId', userId!)
+    }
     return userId
   }
 }

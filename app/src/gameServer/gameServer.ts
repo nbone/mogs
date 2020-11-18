@@ -51,7 +51,7 @@ type HostedGame = {
 
 const hostedGames = new Map<string, HostedGame>()
 
-export function createHostedGame (gameSettings: GameSettings, host: GamePlayer): string {
+export async function createHostedGame (gameSettings: GameSettings, host: GamePlayer): Promise<string> {
   // TODO: validate gameSettings
 
   // 1. create new game entity
@@ -66,7 +66,7 @@ export function createHostedGame (gameSettings: GameSettings, host: GamePlayer):
   hostedGames.set(game.id, game)
 
   // 3. publish create event
-  sendGameInfoMessage(toGameInfo(game))
+  await sendGameInfoMessage(toGameInfo(game))
 
   return game.id
 }

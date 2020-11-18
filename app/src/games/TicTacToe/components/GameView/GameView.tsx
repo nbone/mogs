@@ -3,14 +3,21 @@ import { GameViewState, TileState, GamePlayerAction, GameStatus } from '../../Ti
 
 const style = require('./game-view.css')
 
-export const GameView: React.FunctionComponent = (props: { state: GameViewState, playerActionCallback: (action: object) => null }) => {
-  const { viewState, playerActionCallback } = props
+type GameViewProps = { viewState: GameViewState, playerActionCallback: (action: object) => null, refresh: string }
+
+export const GameView: React.FunctionComponent = (props: GameViewProps) => {
+  const { viewState, playerActionCallback, refresh } = props
 
   const className = style.gameView + ' ' + (viewState.playerNumber === 1 ? style.p1 : style.p2)
   console.log(props)
+
+  const headerText = getHeaderText(viewState)
+
+  // TODO: Why isn't this rerendering???
   return (
-    <div className={className}>
-      <Header state={viewState} />
+    <div className={className} key={refresh}>
+      {headerText}
+      <Header headerText={headerText} />
       <Board state={viewState} onAction={playerActionCallback} />
     </div>
   )
@@ -24,8 +31,16 @@ enum GameResult {
 }
 
 const Header: React.FunctionComponent = (props) => {
-  const { state } = props
+  const { headerText, refresh } = props
 
+  return (
+    <div className={style.header}>
+      {headerText}
+    </div>
+  )
+}
+
+function getHeaderText(state: GameViewState): string {
   let result: GameResult = GameResult.NoneYet
   switch (state.status) {
     case GameStatus.Draw:
@@ -44,11 +59,7 @@ const Header: React.FunctionComponent = (props) => {
     : state.isPlayerTurn ? 'It is your turn'
     : 'Waiting for ' + state.opponentName + ' to take their turn'
 
-  return (
-    <div className={style.header}>
-      {headerText}
-    </div>
-  )
+  return headerText
 }
 
 const Board: React.FunctionComponent = (props) => {
